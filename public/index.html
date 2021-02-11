@@ -1,12 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>x509 Util</title>
-</head>
-<body>
-test
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/mini-default.min.css" />
+    <title>Web x509Util</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-12">
+          <h1>
+            <img src="assets/certificate.png" alt="cert img" /> Web x509Util
+            <small>Generate & Inspect x509 Cert on the Web!!</small>
+          </h1>
+          <p style="background-color: orange;"><span class="icon-alert"></span> All operations are done on the your browser, and not recorded on remote.</mark></p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm">
+          <fieldset>
+            <legend><mark class="tag">Generate</mark></legend>
+            <label for="username">Username</label>
+            <input type="text" id="Username" placeholder="Username" />
+            <br />
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Password" />
+            <br />
+           <button class="primary">Generate</button> <br>
+            <label for="gen-priv">PrivateKey:</label><br>
+                <textarea name="gen-priv" id="gen-priv" cols="70" rows="10" placeholder="Print privatekey here." readonly></textarea>
+            <br />
+            <label for="gen-cert">Certificate:</label><br>
+                <textarea name="gen-cert" id="gen-cert" cols="70" rows="10" placeholder="Print certificate here." readonly></textarea>
+            <br />
+          </fieldset>
+        </div>
+        <div class="col-sm">
+          <fieldset>
+            <legend><mark class="tag tertiary">Inspect</mark></legend>
+            <label for="gen-cert">Paste Certificate:</label><br>
+                <textarea name="gen-cert" id="gen-cert" cols="70" rows="10" placeholder="-----BEGIN CERTIFICATE-----"></textarea>
+            <br />
+           <button class="tertiary">Inspect</button> 
+          </fieldset>
+        </div>
+      </div>
+    </div>
+    <footer>(c) 2021 Web x509Util | niconico-pun, mkontani</footer>
+  </body>
 </html>
