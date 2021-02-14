@@ -6,6 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="css/mini-default.min.css" />
+  <link rel="stylesheet" href="css/custom.css" />
   <script type="module" src="./js/x509util.js"></script>
   <title>Web x509Util</title>
 </head>
@@ -25,32 +26,65 @@
     <div class="row">
       <div class="col-sm">
         <fieldset>
-          <legend><mark class="tag">Generate</mark></legend>
-          <label for="username">Username</label>
-          <input type="text" id="Username" placeholder="Username" />
+          <legend><mark class="tag">Generator</mark></legend>
+          <label for="subject">Subject:</label>
+          <input type="text" id="input-subject" size="90"
+            value="/C=JP/ST=Tokyo/L=Sumida-ku/O=Nicopun Inc./OU=Nicopun Unit/CN=server.nicopun.com" />
           <br />
-          <label for="password">Password</label>
-          <input type="password" id="password" placeholder="Password" />
+          <label for="expiry">Expiry:</label>
+          <input type="number" id="input-expiry" value=90 /> Days After
           <br />
-          <button id="generate-certificate" class="primary">Generate</button> <br>
-          <label for="gen-priv">PrivateKey:</label><br>
-          <textarea name="gen-priv" id="gen-priv" cols="70" rows="10" placeholder="Print privatekey here."
+          <button id="generate-operation" class="primary">Generate</button> <br>
+          <label for="gen-priv"><b>PrivateKey:</b></label><br>
+          <textarea name="gen-priv" id="gen-priv" cols="65" rows="10" placeholder="Privatekey will be printed here."
             readonly></textarea>
           <br />
-          <label for="gen-cert">Certificate:</label><br>
-          <textarea name="gen-cert" id="gen-cert" cols="70" rows="10" placeholder="Print certificate here."
+          <br />
+          <label for="gen-cert"><b>Certificate:</b></label><br>
+          <textarea name="gen-cert" id="gen-cert" cols="65" rows="10" placeholder="Certificate will be printed here."
             readonly></textarea>
           <br />
         </fieldset>
       </div>
       <div class="col-sm">
         <fieldset>
-          <legend><mark class="tag tertiary">Inspect</mark></legend>
-          <label for="gen-cert">Paste Certificate:</label><br>
-          <textarea name="gen-cert" id="gen-cert" cols="70" rows="10"
+          <legend><mark class="tag tertiary">Inspector</mark></legend>
+          <label for="inspect-cert">Paste Certificate:</label><br>
+          <textarea name="inspect-cert" id="inspect-cert" cols="65" rows="10"
             placeholder="-----BEGIN CERTIFICATE-----"></textarea>
           <br />
-          <button class="tertiary">Inspect</button>
+          <button id="inspect-operation" class="tertiary">Inspect</button>
+          <fieldset>
+            <legend>Inspect Data</legend>
+            <table class="horizontal">
+              <thead>
+                <tr>
+                  <th>Version</th>
+                  <th>SerialNumber</th>
+                  <th>Issuer</th>
+                  <th>Validity-NotBefore</th>
+                  <th>Validity-NotAfter</th>
+                  <th>Subject</th>
+                  <th>PublicKeyAlgorithm</th>
+                  <th>PublicKeySize</th>
+                  <th>X509v3Extensions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td id="version" data-label="Version">No data</td>
+                  <td id="serial-number" data-label="SerialNumber">No data</td>
+                  <td id="issuer" data-label="Issuer">No data</td>
+                  <td id="validity-not-before" data-label="Validity-NotBefore">No data</td>
+                  <td id="validity-not-after" data-label="Validity-NotAfter">No data</td>
+                  <td id="subject" data-label="Subject">No data</td>
+                  <td id="public-key-algorithm" data-label="PublicKeyAlgorithm">No data</td>
+                  <td id="public-key-size" data-label="PublicKeySize">No data</td>
+                  <td id="x509v3-extensions" data-label="X509v3Extensions">No data</td>
+                </tr>
+              </tbody>
+            </table>
+          </fieldset>
         </fieldset>
       </div>
     </div>

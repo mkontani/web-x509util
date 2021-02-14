@@ -1,5 +1,5 @@
-import * as asn1js from "./asn1js";
-import { stringToArrayBuffer, bufferToHexCodes } from "./pvutils";
+import * as asn1js from "./asn1js/asn1.js";
+import { stringToArrayBuffer, bufferToHexCodes } from "./pvutils/utils.js";
 import Certificate from "./pkijs/Certificate.js";
 import AttributeTypeAndValue from "./pkijs/AttributeTypeAndValue.js";
 import Extension from "./pkijs/Extension.js";
@@ -26,6 +26,42 @@ const crls = []; // Array of CRLs for all certificates (trusted + intermediate)
 
 let hashAlg = "SHA-1";
 let signAlg = "RSASSA-PKCS1-v1_5";
+
+let issuerObject, subjectObject, extensionArray;
+
+//*********************************************************************************
+//region Put information about X.509 certificate issuer
+const rdnmap = {
+  "2.5.4.6": "C",
+  "2.5.4.10": "O",
+  "2.5.4.11": "OU",
+  "2.5.4.3": "CN",
+  "2.5.4.7": "L",
+  "2.5.4.8": "ST",
+  "2.5.4.12": "T",
+  "2.5.4.42": "GN",
+  "2.5.4.43": "I",
+  "2.5.4.4": "SN",
+  "1.2.840.113549.1.9.1": "E",
+};
+
+//region Put information about signature algorithm
+const algomap = {
+  "1.2.840.113549.1.1.2": "MD2 with RSA",
+  "1.2.840.113549.1.1.4": "MD5 with RSA",
+  "1.2.840.10040.4.3": "SHA1 with DSA",
+  "1.2.840.10045.4.1": "SHA1 with ECDSA",
+  "1.2.840.10045.4.3.2": "SHA256 with ECDSA",
+  "1.2.840.10045.4.3.3": "SHA384 with ECDSA",
+  "1.2.840.10045.4.3.4": "SHA512 with ECDSA",
+  "1.2.840.113549.1.1.10": "RSA-PSS",
+  "1.2.840.113549.1.1.5": "SHA1 with RSA",
+  "1.2.840.113549.1.1.14": "SHA224 with RSA",
+  "1.2.840.113549.1.1.11": "SHA256 with RSA",
+  "1.2.840.113549.1.1.12": "SHA384 with RSA",
+  "1.2.840.113549.1.1.13": "SHA512 with RSA",
+}; // array mapping of common algorithm OIDs and corresponding types
+
 //**************************************************************************************
 //region Auxilliary functions
 //**************************************************************************************
@@ -65,19 +101,14 @@ function parseCertificate() {
   //endregion
 
   //region Initial activities
-  document.getElementById("cert-extn-div").style.display = "none";
+  const issuerTable = document.getElementById("issuer");
+  issuerTable.innerHTML = "";
 
-  const issuerTable = document.getElementById("cert-issuer-table");
-  while (issuerTable.rows.length > 1)
-    issuerTable.deleteRow(issuerTable.rows.length - 1);
+  const subjectTable = document.getElementById("subject");
+  subjectTable.innerHTML = "";
 
-  const subjectTable = document.getElementById("cert-subject-table");
-  while (subjectTable.rows.length > 1)
-    subjectTable.deleteRow(subjectTable.rows.length - 1);
-
-  const extensionTable = document.getElementById("cert-extn-table");
-  while (extensionTable.rows.length > 1)
-    extensionTable.deleteRow(extensionTable.rows.length - 1);
+  const extensionTable = document.getElementById("x509v3-extensions");
+  extensionTable.innerHTML = "";
   //endregion
 
   //region Decode existing X.509 certificate
@@ -85,57 +116,38 @@ function parseCertificate() {
   const certificate = new Certificate({ schema: asn1.result });
   //endregion
 
-  //region Put information about X.509 certificate issuer
-  const rdnmap = {
-    "2.5.4.6": "C",
-    "2.5.4.10": "O",
-    "2.5.4.11": "OU",
-    "2.5.4.3": "CN",
-    "2.5.4.7": "L",
-    "2.5.4.8": "S",
-    "2.5.4.12": "T",
-    "2.5.4.42": "GN",
-    "2.5.4.43": "I",
-    "2.5.4.4": "SN",
-    "1.2.840.113549.1.9.1": "E-mail",
-  };
-
+  issuerObject = {};
   for (const typeAndValue of certificate.issuer.typesAndValues) {
     let typeval = rdnmap[typeAndValue.type];
     if (typeof typeval === "undefined") typeval = typeAndValue.type;
 
     const subjval = typeAndValue.value.valueBlock.value;
 
-    const row = issuerTable.insertRow(issuerTable.rows.length);
-    const cell0 = row.insertCell(0);
-    // noinspection InnerHTMLJS
-    cell0.innerHTML = typeval;
-    const cell1 = row.insertCell(1);
-    // noinspection InnerHTMLJS
-    cell1.innerHTML = subjval;
+    issuerObject[typeval] = subjval;
   }
+  issuerTable.innerHTML = JSON.stringify(issuerObject);
   //endregion
 
   //region Put information about X.509 certificate subject
+  subjectObject = {};
   for (const typeAndValue of certificate.subject.typesAndValues) {
     let typeval = rdnmap[typeAndValue.type];
     if (typeof typeval === "undefined") typeval = typeAndValue.type;
 
     const subjval = typeAndValue.value.valueBlock.value;
 
-    const row = subjectTable.insertRow(subjectTable.rows.length);
-    const cell0 = row.insertCell(0);
-    // noinspection InnerHTMLJS
-    cell0.innerHTML = typeval;
-    const cell1 = row.insertCell(1);
-    // noinspection InnerHTMLJS
-    cell1.innerHTML = subjval;
+    subjectObject[typeval] = subjval;
   }
+  subjectTable.innerHTML = JSON.stringify(subjectObject);
   //endregion
+
+  //region Put information about X.509 certificate version
+  // noinspection InnerHTMLJS
+  document.getElementById("version").innerHTML = certificate.version;
 
   //region Put information about X.509 certificate serial number
   // noinspection InnerHTMLJS
-  document.getElementById("cert-serial-number").innerHTML = bufferToHexCodes(
+  document.getElementById("serial-number").innerHTML = bufferToHexCodes(
     certificate.serialNumber.valueBlock.valueHex
   );
   //endregion
@@ -143,14 +155,14 @@ function parseCertificate() {
   //region Put information about issuance date
   // noinspection InnerHTMLJS
   document.getElementById(
-    "cert-not-before"
+    "validity-not-before"
   ).innerHTML = certificate.notBefore.value.toString();
   //endregion
 
   //region Put information about expiration date
   // noinspection InnerHTMLJS
   document.getElementById(
-    "cert-not-after"
+    "validity-not-after"
   ).innerHTML = certificate.notAfter.value.toString();
   //endregion
 
@@ -183,25 +195,8 @@ function parseCertificate() {
   }
 
   // noinspection InnerHTMLJS
-  document.getElementById("cert-keysize").innerHTML = publicKeySize;
+  document.getElementById("public-key-size").innerHTML = publicKeySize;
   //endregion
-
-  //region Put information about signature algorithm
-  const algomap = {
-    "1.2.840.113549.1.1.2": "MD2 with RSA",
-    "1.2.840.113549.1.1.4": "MD5 with RSA",
-    "1.2.840.10040.4.3": "SHA1 with DSA",
-    "1.2.840.10045.4.1": "SHA1 with ECDSA",
-    "1.2.840.10045.4.3.2": "SHA256 with ECDSA",
-    "1.2.840.10045.4.3.3": "SHA384 with ECDSA",
-    "1.2.840.10045.4.3.4": "SHA512 with ECDSA",
-    "1.2.840.113549.1.1.10": "RSA-PSS",
-    "1.2.840.113549.1.1.5": "SHA1 with RSA",
-    "1.2.840.113549.1.1.14": "SHA224 with RSA",
-    "1.2.840.113549.1.1.11": "SHA256 with RSA",
-    "1.2.840.113549.1.1.12": "SHA384 with RSA",
-    "1.2.840.113549.1.1.13": "SHA512 with RSA",
-  }; // array mapping of common algorithm OIDs and corresponding types
 
   let signatureAlgorithm = algomap[certificate.signatureAlgorithm.algorithmId];
   if (typeof signatureAlgorithm === "undefined")
@@ -210,19 +205,21 @@ function parseCertificate() {
     signatureAlgorithm = `${signatureAlgorithm} (${certificate.signatureAlgorithm.algorithmId})`;
 
   // noinspection InnerHTMLJS
-  document.getElementById("cert-sign-algo").innerHTML = signatureAlgorithm;
+  document.getElementById(
+    "public-key-algorithm"
+  ).innerHTML = signatureAlgorithm;
   //endregion
 
   //region Put information about certificate extensions
+  extensionArray = Array();
   if ("extensions" in certificate) {
     for (let i = 0; i < certificate.extensions.length; i++) {
-      const row = extensionTable.insertRow(extensionTable.rows.length);
-      const cell0 = row.insertCell(0);
-      // noinspection InnerHTMLJS
-      cell0.innerHTML = certificate.extensions[i].extnID;
+      extensionArray.push(certificate.extensions[i].extnID);
     }
 
-    document.getElementById("cert-extn-div").style.display = "block";
+    document.getElementById(
+      "x509v3-extensions"
+    ).innerHTML = extensionArray.join("<br />");
   }
   //endregion
 }
@@ -247,34 +244,51 @@ export function createCertificateInternal() {
 
   //region Put a static values
   certificate.version = 2;
-  certificate.serialNumber = new asn1js.Integer({ value: 1 });
+  certificate.serialNumber = new asn1js.Integer({
+    value: Math.floor(Math.random() * 9999999),
+  });
+
+  // root cert subject(static)
   certificate.issuer.typesAndValues.push(
     new AttributeTypeAndValue({
       type: "2.5.4.6", // Country name
-      value: new asn1js.PrintableString({ value: "RU" }),
+      value: new asn1js.BmpString({ value: "JP" }),
     })
   );
   certificate.issuer.typesAndValues.push(
     new AttributeTypeAndValue({
       type: "2.5.4.3", // Common name
-      value: new asn1js.BmpString({ value: "Test" }),
-    })
-  );
-  certificate.subject.typesAndValues.push(
-    new AttributeTypeAndValue({
-      type: "2.5.4.6", // Country name
-      value: new asn1js.PrintableString({ value: "RU" }),
-    })
-  );
-  certificate.subject.typesAndValues.push(
-    new AttributeTypeAndValue({
-      type: "2.5.4.3", // Common name
-      value: new asn1js.BmpString({ value: "Test" }),
+      value: new asn1js.BmpString({ value: "WebX509 Root" }),
     })
   );
 
-  certificate.notBefore.value = new Date(2019, 1, 1);
-  certificate.notAfter.value = new Date(2022, 1, 1);
+  // cert subject setup
+  const subjectList = document.getElementById("input-subject").value.split("/");
+  subjectList.every((subj) => {
+    const subjkv = subj.split("=", 2);
+    if (subjkv.length != 2) return true;
+    const k = Object.keys(rdnmap).find((rdnk) => {
+      return rdnmap[rdnk] === subjkv[0];
+    });
+    if (k) {
+      certificate.subject.typesAndValues.push(
+        new AttributeTypeAndValue({
+          type: k,
+          value: new asn1js.BmpString({ value: subjkv[1] }),
+        })
+      );
+    }
+    return true;
+  });
+
+  const now = new Date();
+  certificate.notBefore.value = now;
+
+  let notAfter = new Date();
+  notAfter = notAfter.setDate(
+    now.getDate() + Number(document.getElementById("input-expiry").value)
+  );
+  certificate.notAfter.value = new Date(notAfter);
 
   certificate.extensions = []; // Extensions are not a part of certificate by default, it's an optional array
 
@@ -483,31 +497,28 @@ export function createCertificate() {
         new Uint8Array(certificateBuffer)
       );
 
-      let resultString = "-----BEGIN CERTIFICATE-----\r\n";
-      resultString = `${resultString}${formatPEM(
+      let resultCertString = "-----BEGIN CERTIFICATE-----\r\n";
+      resultCertString = `${resultCertString}${formatPEM(
         window.btoa(certificateString)
       )}`;
-      resultString = `${resultString}\r\n-----END CERTIFICATE-----\r\n`;
+      resultCertString = `${resultCertString}\r\n-----END CERTIFICATE-----\r\n`;
+      document.getElementById("gen-cert").innerHTML = resultCertString;
 
       parseCertificate();
-
-      alert("Certificate created successfully!");
 
       const privateKeyString = String.fromCharCode.apply(
         null,
         new Uint8Array(privateKeyBuffer)
       );
 
-      resultString = `${resultString}\r\n-----BEGIN PRIVATE KEY-----\r\n`;
-      resultString = `${resultString}${formatPEM(
+      let resultPrivString = `-----BEGIN PRIVATE KEY-----\r\n`;
+      resultPrivString = `${resultPrivString}${formatPEM(
         window.btoa(privateKeyString)
       )}`;
-      resultString = `${resultString}\r\n-----END PRIVATE KEY-----\r\n`;
+      resultPrivString = `${resultPrivString}\r\n-----END PRIVATE KEY-----\r\n`;
 
       // noinspection InnerHTMLJS
-      document.getElementById("new_signed_data").innerHTML = resultString;
-
-      alert("Private key exported successfully!");
+      document.getElementById("gen-priv").innerHTML = resultPrivString;
     },
     (error) => {
       if (error instanceof Object) alert(error.message);
@@ -517,5 +528,5 @@ export function createCertificate() {
 }
 
 document
-  .getElementById("generate-certificate")
+  .getElementById("generate-operation")
   .addEventListener("click", createCertificate);
