@@ -27,20 +27,53 @@
       <div class="col-sm">
         <fieldset>
           <legend><mark class="tag">Generator</mark></legend>
-          <label for="subject">Subject:</label>
+          <label for="subject"><b>Subject:</b></label>
           <input type="text" id="input-subject" size="90"
             value="/C=JP/ST=Tokyo/L=Sumida-ku/O=Nicopun Inc./OU=Nicopun Unit/CN=server.nicopun.com" />
           <br />
-          <label for="expiry">Expiry:</label>
+          <label for="expiry"><b>Expiry:</b></label><br />
           <input type="number" id="input-expiry" value=90 /> Days After
           <br />
+          <label for="extkeyusage"><b>ExtendedKeyUsage:</b></label><br />
+          <input type="checkbox" id="extkeyusage1" name="extkeyusage" value="2.5.29.37.0" />
+          <label for="extkeyusage1">anyExtendedKeyUsage</label>
+          <input type="checkbox" id="extkeyusage2" name="extkeyusage" value="1.3.6.1.5.5.7.3.1" checked />
+          <label for="extkeyusage2">serverAuth</label>
+          <input type="checkbox" id="extkeyusage3" name="extkeyusage" value="1.3.6.1.5.5.7.3.2" checked />
+          <label for="extkeyusage3">clientAuth</label>
+          <br />
+          <input type="checkbox" id="extkeyusage4" name="extkeyusage" value="1.3.6.1.5.5.7.3.3" />
+          <label for="extkeyusage4">codeSigning</label>
+          <input type="checkbox" id="extkeyusage5" name="extkeyusage" value="1.3.6.1.5.5.7.3.4" />
+          <label for="extkeyusage5">emailProtection</label>
+          <input type="checkbox" id="extkeyusage6" name="extkeyusage" value="1.3.6.1.5.5.7.3.8" />
+          <label for="extkeyusage6">timeStamping</label>
+          <input type="checkbox" id="extkeyusage7" name="extkeyusage" value="1.3.6.1.5.5.7.3.9" />
+          <label for="extkeyusage7">OCSPSigning</label>
+          <br>
+          <label for="hash_alg"><b>Hashing algorithm:</b></label>
+          <select id="hash_alg">
+            <option value="alg_SHA1">SHA-1</option>
+            <option value="alg_SHA256">SHA-256</option>
+            <option value="alg_SHA384">SHA-384</option>
+            <option value="alg_SHA512">SHA-512</option>
+          </select>
+
+          <label for="sign_alg"><b>Signature algorithm:</b></label>
+          <select id="sign_alg">
+            <option value="alg_RSA15">RSASSA-PKCS1-v1_5</option>
+            <option value="alg_RSA2">RSA-PSS</option>
+            <option value="alg_ECDSA">ECDSA</option>
+          </select>
+
+          <br />
           <button id="generate-operation" class="primary">Generate</button> <br>
-          <label for="gen-priv"><b>PrivateKey:</b></label><br>
+          <label for="gen-priv"><b>PrivateKey:</b></label><button class="small" id="priv-copy">copy</button><br>
           <textarea name="gen-priv" id="gen-priv" cols="65" rows="10" placeholder="Privatekey will be printed here."
             readonly></textarea>
           <br />
           <br />
-          <label for="gen-cert"><b>Certificate:</b></label><br>
+          <label for="gen-cert"><b>Certificate:</b></label><button class="small" id="cert-copy">copy</button><br>
           <textarea name="gen-cert" id="gen-cert" cols="65" rows="10" placeholder="Certificate will be printed here."
             readonly></textarea>
           <br />
@@ -49,7 +82,7 @@
       <div class="col-sm">
         <fieldset>
           <legend><mark class="tag tertiary">Inspector</mark></legend>
-          <label for="inspect-cert">Paste Certificate:</label><br>
+          <label for="inspect-cert"><b>Paste Certificate:</b></label><br>
           <textarea name="inspect-cert" id="inspect-cert" cols="65" rows="10"
             placeholder="-----BEGIN CERTIFICATE-----"></textarea>
           <br />
@@ -68,6 +101,7 @@
                   <th>PublicKeyAlgorithm</th>
                   <th>PublicKeySize</th>
                   <th>X509v3Extensions</th>
+                  <th>ExtraKeyUsage</th>
                 </tr>
               </thead>
               <tbody>
@@ -81,6 +115,7 @@
                   <td id="public-key-algorithm" data-label="PublicKeyAlgorithm">No data</td>
                   <td id="public-key-size" data-label="PublicKeySize">No data</td>
                   <td id="x509v3-extensions" data-label="X509v3Extensions">No data</td>
+                  <td id="ext-key-usage" data-label="aExtraKeyUsage">No data</td>
                 </tr>
               </tbody>
             </table>

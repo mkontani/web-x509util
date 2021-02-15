@@ -11,7 +11,6 @@ import {
   getAlgorithmParameters,
   setEngine,
 } from "./pkijs/common.js";
-//import { formatPEM } from "../../examples/examples_common.js";
 import BasicConstraints from "./pkijs/BasicConstraints.js";
 import ExtKeyUsage from "./pkijs/ExtKeyUsage.js";
 import CertificateTemplate from "./pkijs/CertificateTemplate.js";
@@ -62,6 +61,29 @@ const algomap = {
   "1.2.840.113549.1.1.13": "SHA512 with RSA",
 }; // array mapping of common algorithm OIDs and corresponding types
 
+const keyPurposeMap = {
+  "2.5.29.37.0": "anyExtendedKeyUsage",
+  "1.3.6.1.5.5.7.3.1": "serverAuth",
+  "1.3.6.1.5.5.7.3.2": "clientAuth",
+  "1.3.6.1.5.5.7.3.3": "codeSigning",
+  "1.3.6.1.5.5.7.3.4": "emailProtection",
+  "1.3.6.1.5.5.7.3.8": "timeStamping",
+  "1.3.6.1.5.5.7.3.9": "OCSPSigning",
+  "1.3.6.1.4.1.311.10.3.1": "Microsoft Certificate Trust List signing",
+  "1.3.6.1.4.1.311.10.3.4": "Microsoft Encrypted File System",
+};
+
+function checkedArray(name) {
+  const elems = document.getElementsByName(name);
+  let arr = [];
+  for (let i = 0; i < elems.length; i++) {
+    if (elems[i].checked) {
+      arr.push(elems[i].value);
+    }
+  }
+  return arr;
+}
+
 //**************************************************************************************
 //region Auxilliary functions
 //**************************************************************************************
@@ -91,6 +113,41 @@ function formatPEM(pemString) {
   }
 }
 //**************************************************************************************
+export function handleHashAlgOnChange() {
+  const hashOption = document.getElementById("hash_alg").value;
+  switch (hashOption) {
+    case "alg_SHA1":
+      hashAlg = "sha-1";
+      break;
+    case "alg_SHA256":
+      hashAlg = "sha-256";
+      break;
+    case "alg_SHA384":
+      hashAlg = "sha-384";
+      break;
+    case "alg_SHA512":
+      hashAlg = "sha-512";
+      break;
+    default:
+  }
+}
+//*********************************************************************************
+export function handleSignAlgOnChange() {
+  const signOption = document.getElementById("sign_alg").value;
+  switch (signOption) {
+    case "alg_RSA15":
+      signAlg = "RSASSA-PKCS1-V1_5";
+      break;
+    case "alg_RSA2":
+      signAlg = "RSA-PSS";
+      break;
+    case "alg_ECDSA":
+      signAlg = "ECDSA";
+      break;
+    default:
+  }
+}
+//*********************************************************************************
 
 function parseCertificate() {
   //region Initial check
@@ -215,11 +272,21 @@ function parseCertificate() {
   if ("extensions" in certificate) {
     for (let i = 0; i < certificate.extensions.length; i++) {
       extensionArray.push(certificate.extensions[i].extnID);
+
+      // extkeyUsage
+      if (certificate.extensions[i].extnID === "2.5.29.37") {
+        const transkeyusage = certificate.extensions[
+          i
+        ].parsedValue.keyPurposes.map((i) => keyPurposeMap[i] || i);
+        document.getElementById("ext-key-usage").innerHTML = transkeyusage.join(
+          " / "
+        );
+      }
     }
 
     document.getElementById(
       "x509v3-extensions"
-    ).innerHTML = extensionArray.join("<br />");
+    ).innerHTML = extensionArray.join(" / ");
   }
   //endregion
 }
@@ -329,17 +396,7 @@ export function createCertificateInternal() {
 
   //region "ExtendedKeyUsage" extension
   const extKeyUsage = new ExtKeyUsage({
-    keyPurposes: [
-      "2.5.29.37.0", // anyExtendedKeyUsage
-      "1.3.6.1.5.5.7.3.1", // id-kp-serverAuth
-      "1.3.6.1.5.5.7.3.2", // id-kp-clientAuth
-      "1.3.6.1.5.5.7.3.3", // id-kp-codeSigning
-      "1.3.6.1.5.5.7.3.4", // id-kp-emailProtection
-      "1.3.6.1.5.5.7.3.8", // id-kp-timeStamping
-      "1.3.6.1.5.5.7.3.9", // id-kp-OCSPSigning
-      "1.3.6.1.4.1.311.10.3.1", // Microsoft Certificate Trust List signing
-      "1.3.6.1.4.1.311.10.3.4", // Microsoft Encrypted File System
-    ],
+    keyPurposes: checkedArray("extkeyusage"),
   });
 
   certificate.extensions.push(
@@ -526,7 +583,41 @@ export function createCertificate() {
     }
   );
 }
+//*********************************************************************************
+export function inspectCertificate() {
+  let cert = String(document.getElementById("inspect-cert").value)
+    .trim()
+    .replace("-----BEGIN CERTIFICATE-----", "")
+    .replace("-----END CERTIFICATE-----", "")
+    .replace(/\r?\n/g, "");
+  certificateBuffer = stringToArrayBuffer(window.atob(cert));
+  parseCertificate();
+}
+
+export function copyText(target) {
+  target.select();
+  document.execCommand("copy");
+  document.getSelection().empty(target);
+}
+
+document.getElementById("hash_alg").addEventListener("change", () => {
+  handleHashAlgOnChange();
+});
+document.getElementById("sign_alg").addEventListener("change", () => {
+  handleSignAlgOnChange();
+});
+
+document.getElementById("priv-copy").addEventListener("click", () => {
+  copyText(document.querySelector("#gen-priv"));
+});
+document.getElementById("cert-copy").addEventListener("click", () => {
+  copyText(document.querySelector("#gen-cert"));
+});
 
 document
   .getElementById("generate-operation")
   .addEventListener("click", createCertificate);
+
+document.getElementById("inspect-operation").addEventListener("click", () => {
+  inspectCertificate();
+});
