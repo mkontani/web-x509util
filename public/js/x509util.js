@@ -4,12 +4,10 @@ import Certificate from "./pkijs/Certificate.js";
 import AttributeTypeAndValue from "./pkijs/AttributeTypeAndValue.js";
 import Extension from "./pkijs/Extension.js";
 import RSAPublicKey from "./pkijs/RSAPublicKey.js";
-import CertificateChainValidationEngine from "./pkijs/CertificateChainValidationEngine.js";
-import CertificateRevocationList from "./pkijs/CertificateRevocationList.js";
 import {
   getCrypto,
   getAlgorithmParameters,
-  setEngine,
+  getAlgorithmByOID,
 } from "./pkijs/common.js";
 import BasicConstraints from "./pkijs/BasicConstraints.js";
 import ExtKeyUsage from "./pkijs/ExtKeyUsage.js";
@@ -20,8 +18,6 @@ import CAVersion from "./pkijs/CAVersion.js";
 let certificateBuffer = new ArrayBuffer(0); // ArrayBuffer with loaded or created CERT
 let privateKeyBuffer = new ArrayBuffer(0);
 let trustedCertificates = []; // Array of root certificates from "CA Bundle"
-const intermadiateCertificates = []; // Array of intermediate certificates
-const crls = []; // Array of CRLs for all certificates (trusted + intermediate)
 
 let hashAlg = "SHA-1";
 let signAlg = "RSASSA-PKCS1-v1_5";
@@ -113,7 +109,7 @@ function formatPEM(pemString) {
   }
 }
 //**************************************************************************************
-export function handleHashAlgOnChange() {
+function handleHashAlgOnChange() {
   const hashOption = document.getElementById("hash_alg").value;
   switch (hashOption) {
     case "alg_SHA1":
@@ -132,19 +128,49 @@ export function handleHashAlgOnChange() {
   }
 }
 //*********************************************************************************
-export function handleSignAlgOnChange() {
+function handleSignAlgOnChange() {
   const signOption = document.getElementById("sign_alg").value;
   switch (signOption) {
     case "alg_RSA15":
       signAlg = "RSASSA-PKCS1-V1_5";
+      selectableSizeOnChange("rsa");
       break;
     case "alg_RSA2":
       signAlg = "RSA-PSS";
+      selectableSizeOnChange("rsa");
       break;
     case "alg_ECDSA":
       signAlg = "ECDSA";
+      selectableSizeOnChange("ecdsa");
       break;
     default:
+  }
+}
+//*********************************************************************************
+function selectableSizeOnChange(alg) {
+  const rsa_elms = document.getElementsByClassName("rsa_size");
+  const ecdsa_elms = document.getElementsByClassName("ecdsa_size");
+  switch (alg) {
+    case "rsa":
+      for (let i = 0; i < rsa_elms.length; i++) {
+        rsa_elms[i].style.display = "block";
+      }
+      rsa_elms[0].selected = true;
+      for (let i = 0; i < ecdsa_elms.length; i++) {
+        ecdsa_elms[i].style.display = "none";
+      }
+      break;
+    case "ecdsa":
+      for (let i = 0; i < rsa_elms.length; i++) {
+        rsa_elms[i].style.display = "none";
+      }
+      for (let i = 0; i < ecdsa_elms.length; i++) {
+        ecdsa_elms[i].style.display = "block";
+      }
+      ecdsa_elms[0].selected = true;
+      break;
+    default:
+      break;
   }
 }
 //*********************************************************************************
@@ -249,6 +275,12 @@ function parseCertificate() {
         rsaPublicKey.modulus.valueBlock.valueHex.byteLength * 8;
 
     publicKeySize = modulusBitLength.toString();
+  } else {
+    // ECDSA
+    console.log(certificate.subjectPublicKeyInfo.parsedKey);
+    publicKeySize = getAlgorithmByOID(
+      certificate.subjectPublicKeyInfo.parsedKey.namedCurve
+    ).name;
   }
 
   // noinspection InnerHTMLJS
@@ -288,10 +320,15 @@ function parseCertificate() {
       "x509v3-extensions"
     ).innerHTML = extensionArray.join(" / ");
   }
+  document.getElementById("dump-cert").innerHTML = JSON.stringify(
+    certificate,
+    null,
+    4
+  );
   //endregion
 }
 //*********************************************************************************
-export function createCertificateInternal() {
+function createCertificateInternal() {
   //region Initial variables
   let sequence = Promise.resolve();
 
@@ -312,7 +349,7 @@ export function createCertificateInternal() {
   //region Put a static values
   certificate.version = 2;
   certificate.serialNumber = new asn1js.Integer({
-    value: Math.floor(Math.random() * 9999999),
+    value: Math.floor(Math.random() * 999999999),
   });
 
   // root cert subject(static)
@@ -493,6 +530,16 @@ export function createCertificateInternal() {
     if ("hash" in algorithm.algorithm) algorithm.algorithm.hash.name = hashAlg;
     //endregion
 
+    //overwrite keysize
+    const keysize = document.getElementById("key_size").value;
+    if (String(keysize).startsWith("P-")) {
+      // ECDSA
+      algorithm.algorithm.namedCurve = keysize;
+    } else {
+      // RSA
+      algorithm.algorithm.modulusLength = keysize;
+    }
+
     return crypto.generateKey(algorithm.algorithm, true, algorithm.usages);
   });
   //endregion
@@ -546,7 +593,7 @@ export function createCertificateInternal() {
   return sequence;
 }
 //*********************************************************************************
-export function createCertificate() {
+function createCertificate() {
   return createCertificateInternal().then(
     () => {
       const certificateString = String.fromCharCode.apply(
@@ -584,7 +631,7 @@ export function createCertificate() {
   );
 }
 //*********************************************************************************
-export function inspectCertificate() {
+function inspectCertificate() {
   let cert = String(document.getElementById("inspect-cert").value)
     .trim()
     .replace("-----BEGIN CERTIFICATE-----", "")
@@ -594,7 +641,7 @@ export function inspectCertificate() {
   parseCertificate();
 }
 
-export function copyText(target) {
+function copyText(target) {
   target.select();
   document.execCommand("copy");
   document.getSelection().empty(target);

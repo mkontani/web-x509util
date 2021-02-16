@@ -65,6 +65,16 @@
             <option value="alg_RSA2">RSA-PSS</option>
             <option value="alg_ECDSA">ECDSA</option>
           </select>
+          <br />
+          <label for="key_size"><b>Key Size:</b></label>
+          <select id="key_size">
+            <option class="rsa_size" value=1024>1024 bit</option>
+            <option class="rsa_size" value=2048>2048 bit</option>
+            <option class="rsa_size" value=4096>4096 bit</option>
+            <option class="ecdsa_size" value="P-256" style="display: none;">P-256</option>
+            <option class="ecdsa_size" value="P-384" style="display: none;">P-384</option>
+            <option class="ecdsa_size" value="P-521" style="display: none;">P-521</option>
+          </select>
 
           <br />
           <button id="generate-operation" class="primary">Generate</button> <br>
@@ -123,6 +133,16 @@
         </fieldset>
       </div>
     </div>
+    <div class="collapse">
+      <input type="checkbox" id="collapse-section1" aria-hidden="true">
+
+      <label for="collapse-section1" aria-hidden="true"><b>DumpData</b><span class="tooltip"
+          aria-label="expand cert dumpdata"><span class="icon-help"></span></span></label>
+      <div>
+        <pre class="col-sm-12" id="dump-cert">No data</pre>
+      </div>
+    </div>
+
   </div>
   <footer>(c) 2021 Web x509Util | niconico-pun, mkontani</footer>
 </body>
