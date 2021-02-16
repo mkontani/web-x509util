@@ -277,7 +277,6 @@ function parseCertificate() {
     publicKeySize = modulusBitLength.toString();
   } else {
     // ECDSA
-    console.log(certificate.subjectPublicKeyInfo.parsedKey);
     publicKeySize = getAlgorithmByOID(
       certificate.subjectPublicKeyInfo.parsedKey.namedCurve
     ).name;
