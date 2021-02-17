@@ -593,6 +593,8 @@ function createCertificateInternal() {
 }
 //*********************************************************************************
 function createCertificate() {
+  const processing = document.getElementById("gen-processing").style;
+  processing.display = "inline-block";
   return createCertificateInternal().then(
     () => {
       const certificateString = String.fromCharCode.apply(
@@ -622,8 +624,10 @@ function createCertificate() {
 
       // noinspection InnerHTMLJS
       document.getElementById("gen-priv").innerHTML = resultPrivString;
+      processing.display = "none";
     },
     (error) => {
+      processing.display = "none";
       if (error instanceof Object) alert(error.message);
       else alert(error);
     }

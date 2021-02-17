@@ -2,3 +2,7 @@ textarea {
   font-family: "Courier New", Courier, monospace;
   font-size: small;
 }
+
+.spinner.primary {
+  margin-bottom: -7px;
+}

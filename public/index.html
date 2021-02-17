@@ -77,7 +77,9 @@
           </select>
 
           <br />
-          <button id="generate-operation" class="primary">Generate</button> <br>
+          <button id="generate-operation" class="primary">Generate</button>
+          <div id="gen-processing" class="spinner primary" style="display: none;"></div>
+          <br>
           <label for="gen-priv"><b>PrivateKey:</b></label><button class="small" id="priv-copy">copy</button><br>
           <textarea name="gen-priv" id="gen-priv" cols="65" rows="10" placeholder="Privatekey will be printed here."
             readonly></textarea>
