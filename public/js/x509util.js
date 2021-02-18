@@ -13,6 +13,8 @@ import BasicConstraints from "./pkijs/BasicConstraints.js";
 import ExtKeyUsage from "./pkijs/ExtKeyUsage.js";
 import CertificateTemplate from "./pkijs/CertificateTemplate.js";
 import CAVersion from "./pkijs/CAVersion.js";
+import AltName from "./pkijs/AltName.js";
+import GeneralName from "./pkijs/GeneralName.js";
 //<nodewebcryptoossl>
 //*********************************************************************************
 let certificateBuffer = new ArrayBuffer(0); // ArrayBuffer with loaded or created CERT
@@ -22,7 +24,7 @@ let trustedCertificates = []; // Array of root certificates from "CA Bundle"
 let hashAlg = "SHA-1";
 let signAlg = "RSASSA-PKCS1-v1_5";
 
-let issuerObject, subjectObject, extensionArray;
+let issuerObject, subjectObject, extensionArray, sansArray;
 
 //*********************************************************************************
 //region Put information about X.509 certificate issuer
@@ -67,6 +69,13 @@ const keyPurposeMap = {
   "1.3.6.1.5.5.7.3.9": "OCSPSigning",
   "1.3.6.1.4.1.311.10.3.1": "Microsoft Certificate Trust List signing",
   "1.3.6.1.4.1.311.10.3.4": "Microsoft Encrypted File System",
+};
+
+const sansMap = {
+  email: 1,
+  dns: 2,
+  uri: 6,
+  ip: 7,
 };
 
 function checkedArray(name) {
@@ -185,13 +194,16 @@ function parseCertificate() {
 
   //region Initial activities
   const issuerTable = document.getElementById("issuer");
-  issuerTable.innerHTML = "";
+  issuerTable.innerHTML = "No Data";
 
   const subjectTable = document.getElementById("subject");
-  subjectTable.innerHTML = "";
+  subjectTable.innerHTML = "No Data";
 
   const extensionTable = document.getElementById("x509v3-extensions");
-  extensionTable.innerHTML = "";
+  extensionTable.innerHTML = "No Data";
+
+  const sansTable = document.getElementById("sans");
+  sansTable.innerHTML = "No Data";
   //endregion
 
   //region Decode existing X.509 certificate
@@ -300,6 +312,7 @@ function parseCertificate() {
 
   //region Put information about certificate extensions
   extensionArray = Array();
+  sansArray = Array();
   if ("extensions" in certificate) {
     for (let i = 0; i < certificate.extensions.length; i++) {
       extensionArray.push(certificate.extensions[i].extnID);
@@ -313,11 +326,26 @@ function parseCertificate() {
           " / "
         );
       }
-    }
 
-    document.getElementById(
-      "x509v3-extensions"
-    ).innerHTML = extensionArray.join(" / ");
+      // subjectAltName
+      if (certificate.extensions[i].extnID === "2.5.29.17") {
+        certificate.extensions[i].parsedValue.altNames.forEach((v) => {
+          const k = Object.keys(sansMap).find((k) => sansMap[k] === v.type);
+          if (k) {
+            const sanv =
+              k !== "ip"
+                ? v.value
+                : String(new Uint8Array(v.value.valueBlock.valueHex)).replace(
+                    /,/g,
+                    "."
+                  );
+            sansArray.push(`${String(k).toUpperCase()}: ${sanv}`);
+          }
+        });
+      }
+    }
+    extensionTable.innerHTML = extensionArray.join(" / ");
+    sansTable.innerHTML = sansArray.join(" / ");
   }
   document.getElementById("dump-cert").innerHTML = JSON.stringify(
     certificate,
@@ -348,7 +376,7 @@ function createCertificateInternal() {
   //region Put a static values
   certificate.version = 2;
   certificate.serialNumber = new asn1js.Integer({
-    value: Math.floor(Math.random() * 999999999),
+    value: Math.floor(Math.random() * 99999999999),
   });
 
   // root cert subject(static)
@@ -367,21 +395,22 @@ function createCertificateInternal() {
 
   // cert subject setup
   const subjectList = document.getElementById("input-subject").value.split("/");
-  subjectList.every((subj) => {
-    const subjkv = subj.split("=", 2);
-    if (subjkv.length != 2) return true;
+  subjectList.forEach((subj) => {
+    const subjkv = subj.split("=");
+    if (subjkv.length < 2) return;
+    const subjk = subjkv.shift(),
+      subjv = subjkv.join("=");
     const k = Object.keys(rdnmap).find((rdnk) => {
-      return rdnmap[rdnk] === subjkv[0];
+      return rdnmap[rdnk] === subjk;
     });
     if (k) {
       certificate.subject.typesAndValues.push(
         new AttributeTypeAndValue({
           type: k,
-          value: new asn1js.BmpString({ value: subjkv[1] }),
+          value: new asn1js.BmpString({ value: subjv }),
         })
       );
     }
-    return true;
   });
 
   const now = new Date();
@@ -519,7 +548,57 @@ function createCertificateInternal() {
       parsedValue: caVersion, // Parsed value for well-known extensions
     })
   );
-  //endregion
+
+  const sans = new Array();
+  const sansList = String(document.getElementById("input-sans").value).split(
+    ","
+  );
+  sansList.forEach((san) => {
+    const kvMap = san.split(":").map((v, i) => {
+      return i === 0 ? v.trim().toLowerCase() : v.trim();
+    });
+    if (kvMap.length < 2) {
+      console.log("warn: invalid specification!");
+      return;
+    }
+    const k = kvMap.shift(),
+      v = kvMap.join(":");
+    let g;
+    switch (k) {
+      case "email":
+      case "dns":
+      case "uri":
+        g = new GeneralName({
+          type: sansMap[k],
+          value: v,
+        });
+        sans.push(g);
+        break;
+      case "ip":
+        g = new GeneralName({
+          type: sansMap[k],
+          value: new asn1js.OctetString({
+            valueHex: new Uint8Array(v.split(".").map(Number)).buffer,
+          }),
+        });
+        sans.push(g);
+        break;
+      default:
+        console.log(`warn: unknown identifier ${kvMap[0]} specified.`);
+        break;
+    }
+  });
+  const altName = new AltName({ altNames: sans });
+
+  //region "SubjectAltName" extension
+  certificate.extensions.push(
+    new Extension({
+      extnID: "2.5.29.17",
+      critical: false,
+      extnValue: altName.toSchema().toBER(false),
+      parsedValue: altName, // Parsed value for well-known extensions
+    })
+  );
   //endregion
 
   //region Create a new key pair

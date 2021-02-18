@@ -27,11 +27,11 @@
       <div class="col-sm">
         <fieldset>
           <legend><mark class="tag">Generator</mark></legend>
-          <label for="subject"><b>Subject:</b></label>
+          <label for="input-subject"><b>Subject:</b></label>
           <input type="text" id="input-subject" size="90"
             value="/C=JP/ST=Tokyo/L=Sumida-ku/O=Nicopun Inc./OU=Nicopun Unit/CN=server.nicopun.com" />
           <br />
-          <label for="expiry"><b>Expiry:</b></label><br />
+          <label for="input-expiry"><b>Expiry:</b></label><br />
           <input type="number" id="input-expiry" value=90 /> Days After
           <br />
           <label for="extkeyusage"><b>ExtendedKeyUsage:</b></label><br />
@@ -75,6 +75,12 @@
             <option class="ecdsa_size" value="P-384" style="display: none;">P-384</option>
             <option class="ecdsa_size" value="P-521" style="display: none;">P-521</option>
           </select>
+          <br />
+          <label for="input-sans"><b>SubjectAltName(SANs):</b></label>
+          <input type="text" id="input-sans" size="90"
+            value="DNS:server.nicopun.com,IP:127.0.0.1,URI:http://nicopun.com/,email:m@nicopun.com" />
+          <br />
+
 
           <br />
           <button id="generate-operation" class="primary">Generate</button>
@@ -114,20 +120,22 @@
                   <th>PublicKeySize</th>
                   <th>X509v3Extensions</th>
                   <th>ExtraKeyUsage</th>
+                  <th>SANs</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td id="version" data-label="Version">No data</td>
-                  <td id="serial-number" data-label="SerialNumber">No data</td>
-                  <td id="issuer" data-label="Issuer">No data</td>
-                  <td id="validity-not-before" data-label="Validity-NotBefore">No data</td>
-                  <td id="validity-not-after" data-label="Validity-NotAfter">No data</td>
-                  <td id="subject" data-label="Subject">No data</td>
-                  <td id="public-key-algorithm" data-label="PublicKeyAlgorithm">No data</td>
-                  <td id="public-key-size" data-label="PublicKeySize">No data</td>
-                  <td id="x509v3-extensions" data-label="X509v3Extensions">No data</td>
-                  <td id="ext-key-usage" data-label="aExtraKeyUsage">No data</td>
+                  <td id="version" data-label="Version">No Data</td>
+                  <td id="serial-number" data-label="SerialNumber">No Data</td>
+                  <td id="issuer" data-label="Issuer">No Data</td>
+                  <td id="validity-not-before" data-label="Validity-NotBefore">No Data</td>
+                  <td id="validity-not-after" data-label="Validity-NotAfter">No Data</td>
+                  <td id="subject" data-label="Subject">No Data</td>
+                  <td id="public-key-algorithm" data-label="PublicKeyAlgorithm">No Data</td>
+                  <td id="public-key-size" data-label="PublicKeySize">No Data</td>
+                  <td id="x509v3-extensions" data-label="X509v3Extensions">No Data</td>
+                  <td id="ext-key-usage" data-label="ExtraKeyUsage">No Data</td>
+                  <td id="sans" data-label="SANs">No Data</td>
                 </tr>
               </tbody>
             </table>
@@ -141,7 +149,7 @@
       <label for="collapse-section1" aria-hidden="true"><b>DumpData</b><span class="tooltip"
           aria-label="expand cert dumpdata"><span class="icon-help"></span></span></label>
       <div>
-        <pre class="col-sm-12" id="dump-cert">No data</pre>
+        <pre class="col-sm-12" id="dump-cert">No Data</pre>
       </div>
     </div>
 
