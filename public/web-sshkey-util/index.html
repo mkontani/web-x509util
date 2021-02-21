@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="../assets/key.png" type="image/png">
+  <link rel="stylesheet" href="../css/mini-default.min.css" />
+  <link rel="stylesheet" href="../css/custom.css" />
+  <title>Web SSH-Key Util</title>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-12">
+        <h1>
+          <img src="../assets/key.png" alt="key img" /> Web SSH-Key Util
+          <small>Generate & Convert SSH KeyPair on the Web!!</small>
+        </h1>
+        <p style="background-color: orange;"><span class="icon-alert"></span> All operations are done on the your
+          browser, and not recorded on remote.</mark></p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm">
+        <fieldset>
+          <legend><mark class="tag">Generator</mark></legend>
+          <label for="hash_alg"><b>Hashing algorithm:</b></label>
+          <select id="hash_alg">
+            <option value="alg_SHA1">SHA-1</option>
+            <option value="alg_SHA256">SHA-256</option>
+            <option value="alg_SHA384">SHA-384</option>
+            <option value="alg_SHA512">SHA-512</option>
+          </select>
+
+          <label for="sign_alg"><b>Signature algorithm:</b></label>
+          <select id="sign_alg">
+            <option value="alg_RSA15">RSASSA-PKCS1-v1_5</option>
+            <option value="alg_RSA2">RSA-PSS</option>
+            <option value="alg_ECDSA">ECDSA</option>
+          </select>
+          <br />
+          <label for="key_size"><b>Key Size:</b></label>
+          <select id="key_size">
+            <option class="rsa_size" value=1024>1024 bit</option>
+            <option class="rsa_size" value=2048>2048 bit</option>
+            <option class="rsa_size" value=4096>4096 bit</option>
+            <option class="ecdsa_size" value="P-256" style="display: none;">P-256</option>
+            <option class="ecdsa_size" value="P-384" style="display: none;">P-384</option>
+            <option class="ecdsa_size" value="P-521" style="display: none;">P-521</option>
+          </select>
+          <br />
+          <label for="input-passphrase"><b>Passphrase:</b></label>
+          <input type="password" id="input-passphrase" size="45" value="" />
+          <br />
+          <button id="generate-operation" class="primary">Generate</button>
+          <div id="gen-processing" class="spinner primary" style="display: none;"></div>
+          <br>
+          <label for="gen-priv"><b>PrivateKey:</b></label><button class="small" id="priv-copy">copy</button><br>
+          <textarea name="gen-priv" id="gen-priv" cols="65" rows="10" placeholder="PrivateKey will be printed here."
+            readonly></textarea>
+          <br />
+          <br />
+          <label for="gen-pub"><b>PublicKey:</b></label><button class="small" id="pub-copy">copy</button><br>
+          <textarea name="gen-pub" id="gen-pub" cols="65" rows="10" placeholder="PublicKey will be printed here."
+            readonly></textarea>
+          <br />
+        </fieldset>
+      </div>
+      <div class="col-sm">
+        <fieldset>
+          <legend><mark class="tag tertiary">Converter</mark></legend>
+          <label for="convert-key"><b>Paste PrivKey or PublicKey with any format:</b></label><br>
+          <textarea name="convert-key" id="convert-key" cols="65" rows="10" placeholder="ssh-rsa AAA..."></textarea>
+          <br />
+          <button id="convert-operation" class="tertiary">Convert</button>
+          <br />
+          <fieldset id="converted-field">
+            <legend>Converted Data</legend>
+          </fieldset>
+        </fieldset>
+      </div>
+    </div>
+  </div>
+
+  <footer>(c) 2021 Web SSH-Key Util | <a
+      href="https://gitlab.com/niconico-pun/web-x509util/web-sshkey-util">niconico-pun</a>,<a
+      href="https://github.com/mkontani/web-x509util/web-sshkey-util">mkontani</a></footer>
+</body>
+
+</html>
+<script type="module" src="../js/sshkeyutil.js"></script>
