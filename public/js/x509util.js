@@ -1,3 +1,4 @@
+import { copyText, formatPEM } from "./common.js";
 import * as asn1js from "./asn1js/asn1.js";
 import { stringToArrayBuffer, bufferToHexCodes } from "./pvutils/utils.js";
 import Certificate from "./pkijs/Certificate.js";
@@ -92,32 +93,7 @@ function checkedArray(name) {
 //**************************************************************************************
 //region Auxilliary functions
 //**************************************************************************************
-/**
- * Format string in order to have each line with length equal to 64
- * @param {string} pemString String to format
- * @returns {string} Formatted string
- */
-function formatPEM(pemString) {
-  const PEM_STRING_LENGTH = pemString.length,
-    LINE_LENGTH = 64;
-  const wrapNeeded = PEM_STRING_LENGTH > LINE_LENGTH;
 
-  if (wrapNeeded) {
-    let formattedString = "",
-      wrapIndex = 0;
-
-    for (let i = LINE_LENGTH; i < PEM_STRING_LENGTH; i += LINE_LENGTH) {
-      formattedString += pemString.substring(wrapIndex, i) + "\r\n";
-      wrapIndex = i;
-    }
-
-    formattedString += pemString.substring(wrapIndex, PEM_STRING_LENGTH);
-    return formattedString;
-  } else {
-    return pemString;
-  }
-}
-//**************************************************************************************
 function handleHashAlgOnChange() {
   const hashOption = document.getElementById("hash_alg").value;
   switch (hashOption) {
@@ -721,12 +697,6 @@ function inspectCertificate() {
     .replace(/\r?\n/g, "");
   certificateBuffer = stringToArrayBuffer(window.atob(cert));
   parseCertificate();
-}
-
-function copyText(target) {
-  target.select();
-  document.execCommand("copy");
-  document.getSelection().empty(target);
 }
 
 document.getElementById("hash_alg").addEventListener("change", () => {
